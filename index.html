@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Internship Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f6f9;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0 15px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .primary-btn {
+            background: #1e88e5;
+            color: white;
+            width: 100%;
+        }
+
+        .edit-btn {
+            background: #1976d2;
+            color: white;
+        }
+
+     .edit-btn {
+       background: #1976d2;
+       color: white;
+       margin-right: 6px;   /* ADD THIS LINE */
+     }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #f1f3f6;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            color: white;
+            font-size: 12px;
+        }
+
+        .Applied { background: #757575; }
+        .Interview { background: #fb8c00; }
+        .Selected { background: #43a047; }
+        .Rejected { background: #e53935; }
+        .stats-container {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.stat-box {
+    flex: 1;
+    min-width: 120px;
+    background: #f4f6f9;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+#selectedBox {
+    background: #43a047;
+    color: white;
+}
+
+#rejectedBox {
+    background: #e53935;
+    color: white;
+}
+#searchInput {
+    max-width: 400px;
+}
+
+    </style>
+</head>
+<body>
+
+<h1>Internship Tracker</h1>
+
+<div class="card">
+    <h3>Add / Edit Internship</h3>
+    <input type="text" id="company" placeholder="Company Name">
+    <input type="text" id="role" placeholder="Role">
+    <input type="date" id="date">
+    
+    <select id="status">
+        <option value="Applied">Applied</option>
+        <option value="Interview">Interview</option>
+        <option value="Selected">Selected</option>
+        <option value="Rejected">Rejected</option>
+    </select>
+
+    <button class="primary-btn" onclick="addInternship()">Add / Update Internship</button>
+</div>
+
+<div class="card">
+    <h3>Filter by Status</h3>
+    <select id="filter" onchange="displayInternships()">
+        <option value="All">All</option>
+        <option value="Applied">Applied</option>
+        <option value="Interview">Interview</option>
+        <option value="Selected">Selected</option>
+        <option value="Rejected">Rejected</option>
+    </select>
+</div>
+<div class="card" id="statsCard">
+    <h3>Application Summary</h3>
+    <div class="stats-container">
+    <div class="stat-box" id="totalBox"></div>
+    <div class="stat-box" id="appliedBox"></div>
+    <div class="stat-box" id="interviewBox"></div>
+    <div class="stat-box" id="selectedBox"></div>
+    <div class="stat-box" id="rejectedBox"></div>
+</div>
+</div>
+<div class="card">
+    <h3>Search</h3>
+    <input type="text" id="searchInput" placeholder="Search by company or role..." onkeyup="displayInternships()">
+</div>
+
+<h2>My Applications</h2>
+
+<table id="applicationsTable">
+    <thead>
+        <tr>
+            <th>Company</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+let internships = JSON.parse(localStorage.getItem("internships")) || [];
+let editIndex = -1;
+
+function saveData() {
+    localStorage.setItem("internships", JSON.stringify(internships));
+}
+
+function addInternship() {
+    const company = document.getElementById('company').value.trim();
+    const role = document.getElementById('role').value.trim();
+    const date = document.getElementById('date').value;
+    const status = document.getElementById('status').value;
+
+    if (!company || !role || !date) {
+        alert("Please fill all fields");
+        return;
+    }
+
+    if (editIndex === -1) {
+        internships.push({ company, role, status, date });
+    } else {
+        internships[editIndex] = { company, role, status, date };
+        editIndex = -1;
+    }
+
+    saveData();
+    clearForm();
+    document.getElementById('filter').value = "All";
+    displayInternships();
+}
+
+function displayInternships() {
+    const tbody = document.querySelector("#applicationsTable tbody");
+    tbody.innerHTML = "";
+
+    const searchText = document.getElementById('searchInput').value.toLowerCase();
+    const filter = document.getElementById('filter').value;
+
+    internships.forEach((item, index) => {
+        if (
+            (filter === "All" || item.status === filter) &&
+            (item.company.toLowerCase().includes(searchText) ||
+             item.role.toLowerCase().includes(searchText))
+        ) {
+            const row = `
+                <tr>
+                    <td>${item.company}</td>
+                    <td>${item.role}</td>
+                    <td><span class="badge ${item.status}">${item.status}</span></td>
+                    <td>${item.date || "-"}</td>
+                    <td>
+                        <button class="edit-btn" onclick="editInternship(${index})">Edit</button>
+                        <button class="delete-btn" onclick="deleteInternship(${index})">Delete</button>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        }
+    });
+
+    updateStats();
+}
+
+function editInternship(index) {
+    const item = internships[index];
+    document.getElementById('company').value = item.company;
+    document.getElementById('role').value = item.role;
+    document.getElementById('status').value = item.status;
+    document.getElementById('date').value = item.date;
+    editIndex = index;
+}
+
+function deleteInternship(index) {
+    internships.splice(index, 1);
+    saveData();
+    displayInternships();
+}
+
+function updateStats() {
+    const total = internships.length;
+    const applied = internships.filter(i => i.status === "Applied").length;
+    const interview = internships.filter(i => i.status === "Interview").length;
+    const selected = internships.filter(i => i.status === "Selected").length;
+    const rejected = internships.filter(i => i.status === "Rejected").length;
+
+    document.getElementById("totalBox").innerHTML = "Total<br><span style='font-size:20px'>" + total + "</span>";
+    document.getElementById("appliedBox").innerHTML = "Applied<br>" + applied;
+    document.getElementById("interviewBox").innerHTML = "Interview<br>" + interview;
+    document.getElementById("selectedBox").innerHTML = "Selected<br>" + selected;
+    document.getElementById("rejectedBox").innerHTML = "Rejected<br>" + rejected;
+}
+
+function clearForm() {
+    document.getElementById('company').value = "";
+    document.getElementById('role').value = "";
+    document.getElementById('date').value = "";
+    document.getElementById('status').value = "Applied";
+}
+
+window.onload = function() {
+    displayInternships();
+};
+</script>
+</body>
+</html>
