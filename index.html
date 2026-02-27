@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Internship Tracker Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; padding: 40px; color: #000; }
+        h1 { text-align: center; margin-bottom: 30px; }
+
+        /* Dark mode */
+        body.dark-mode { background: #121212; color: #e0e0e0; }
+        body.dark-mode input, body.dark-mode select, body.dark-mode table, body.dark-mode .card { background: #1e1e1e; color: #e0e0e0; border: 1px solid #333; }
+        body.dark-mode th { background: linear-gradient(90deg,#333,#555); color: #e0e0e0; }
+        body.dark-mode .Applied-row { background: #2c2c2c; }
+        body.dark-mode .Interview-row { background: #3a2b1f; }
+        body.dark-mode .Selected-row { background: #243624; }
+        body.dark-mode .Rejected-row { background: #3a1f1f; }
+        body.dark-mode .stat-box { background: #1e1e1e; box-shadow: 0 2px 6px rgba(255,255,255,0.05); }
+
+        /* Card styling */
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 25px; transition: transform 0.2s, box-shadow 0.2s; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+        .card h3 { background: linear-gradient(90deg,#1e88e5,#42a5f5); color: white; padding: 10px 15px; border-radius: 8px; }
+
+        /* Inputs and buttons */
+        input, select { width: 100%; padding: 10px; margin: 8px 0 15px; border-radius: 6px; border: 1px solid #ccc; }
+        button { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: transform 0.1s; }
+        button:hover { transform: scale(1.05); }
+        .primary-btn { background: #1e88e5; color: white; width: 100%; margin-bottom:10px; }
+        .edit-btn { background: #1976d2; color: white; margin-right: 6px; }
+        .delete-btn { background: #e53935; color: white; }
+
+        /* Table styling */
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; transition: all 0.2s; }
+        table tr:hover { opacity: 0.9; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: linear-gradient(90deg,#42a5f5,#1e88e5); color: white; }
+
+        /* Row colors by status */
+        .Applied-row { background: #f5f5f5; }
+        .Interview-row { background: #fff3e0; }
+        .Selected-row { background: #e8f5e9; }
+        .Rejected-row { background: #ffebee; }
+
+        /* Badges with icons */
+        .badge { padding: 4px 10px; border-radius: 12px; color: white; font-size: 12px; font-weight: 600; }
+        .badge.Applied::before { content:"📄 "; }
+        .badge.Interview::before { content:"🕒 "; }
+        .badge.Selected::before { content:"✅ "; }
+        .badge.Rejected::before { content:"❌ "; }
+        .Applied { background: #757575; }
+        .Interview { background: #fb8c00; }
+        .Selected { background: #43a047; }
+        .Rejected { background: #e53935; }
+
+        /* Stats cards */
+        .stats-container { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 10px; }
+        .stat-box { flex: 1; min-width: 120px; background: #f4f6f9; padding: 20px; border-radius: 12px; text-align: center; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: transform 0.2s, box-shadow 0.2s; }
+        .stat-box:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        #totalBox { background: #90caf9; color: #0d47a1; }
+        #appliedBox { background: #eeeeee; color: #424242; }
+        #interviewBox { background: #ffe082; color: #ef6c00; }
+        #selectedBox { background: #a5d6a7; color: #1b5e20; }
+        #rejectedBox { background: #ef9a9a; color: #b71c1c; }
+
+        #chartContainer, #upcomingChartContainer { max-width: 400px; margin: 20px auto; }
+        #searchInput { max-width: 400px; margin-top: 10px; }
+        .editing-row { background: #fff3e0 !important; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div style="text-align:center; margin-bottom:20px;">
+    <button id="darkModeBtn" class="primary-btn" onclick="toggleDarkMode()">Toggle Dark Mode 🌙</button>
+</div>
+
+<h1>Internship Tracker Dashboard</h1>
+
+<div class="card">
+    <h3>Add / Edit Internship</h3>
+    <input type="text" id="company" placeholder="Company Name">
+    <input type="text" id="role" placeholder="Role">
+    <input type="date" id="date">
+    <select id="status">
+        <option value="Applied">Applied</option>
+        <option value="Interview">Interview</option>
+        <option value="Selected">Selected</option>
+        <option value="Rejected">Rejected</option>
+    </select>
+    <button class="primary-btn" onclick="addInternship()">Add Internship</button>
+</div>
+
+<div class="card">
+    <h3>Filter & Search</h3>
+    <select id="filter" onchange="displayInternships()">
+        <option value="All">All</option>
+        <option value="Applied">Applied</option>
+        <option value="Interview">Interview</option>
+        <option value="Selected">Selected</option>
+        <option value="Rejected">Rejected</option>
+    </select>
+    <input type="text" id="searchInput" placeholder="Search by company or role..." onkeyup="displayInternships()">
+</div>
+
+<div class="card">
+    <h3>Application Summary</h3>
+    <div class="stats-container">
+        <div class="stat-box" id="totalBox"></div>
+        <div class="stat-box" id="appliedBox"></div>
+        <div class="stat-box" id="interviewBox"></div>
+        <div class="stat-box" id="selectedBox"></div>
+        <div class="stat-box" id="rejectedBox"></div>
+    </div>
+    <div id="chartContainer">
+        <canvas id="statusChart"></canvas>
+    </div>
+</div>
+
+<div id="upcomingChartContainer" class="card">
+    <h3>Upcoming Interviews (Next 7 Days)</h3>
+    <canvas id="upcomingChart"></canvas>
+</div>
+
+<div class="card">
+    <button class="primary-btn" onclick="exportCSV()">Export All Internships (CSV)</button>
+    <button class="primary-btn" onclick="exportUpcomingCSV()">Export Upcoming Interviews (Next 7 Days)</button>
+    <button class="primary-btn" onclick="exportFilteredCSV()">Export Filtered Table (CSV)</button>
+</div>
+
+<h2>My Applications</h2>
+<table id="applicationsTable">
+    <thead>
+        <tr>
+            <th>Company</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let internships = JSON.parse(localStorage.getItem("internships")) || [];
+let editIndex = -1;
+
+function saveData() { localStorage.setItem("internships", JSON.stringify(internships)); }
+
+function addInternship() {
+    const company = document.getElementById('company').value.trim();
+    const role = document.getElementById('role').value.trim();
+    const date = document.getElementById('date').value;
+    const status = document.getElementById('status').value;
+    if (!company || !role || !date) { alert("Please fill all fields"); return; }
+
+    if(editIndex===-1){ internships.push({company,role,status,date}); }
+    else{ internships[editIndex]={company,role,status,date}; editIndex=-1; document.querySelector(".primary-btn").innerText="Add Internship"; }
+
+    saveData(); clearForm(); document.getElementById('filter').value="All"; document.getElementById('searchInput').value="";
+    updateCharts();
+}
+
+function displayInternships() {
+    const tbody = document.querySelector("#applicationsTable tbody");
+    tbody.innerHTML = "";
+    const searchText=document.getElementById('searchInput').value.toLowerCase();
+    const filter=document.getElementById('filter').value;
+
+    internships.forEach((item,index)=>{
+        if((filter==="All"||item.status===filter)&&
+           (item.company.toLowerCase().includes(searchText)||item.role.toLowerCase().includes(searchText))){
+            const row=document.createElement("tr");
+            row.classList.add(item.status+"-row");
+            if(index===editIndex) row.classList.add("editing-row");
+            row.innerHTML=`<td>${item.company}</td>
+                           <td>${item.role}</td>
+                           <td><span class="badge ${item.status}">${item.status}</span></td>
+                           <td>${item.date}</td>
+                           <td><button class="edit-btn" onclick="editInternship(${index})">Edit</button>
+                               <button class="delete-btn" onclick="deleteInternship(${index})">Delete</button></td>`;
+            tbody.appendChild(row);
+        }
+    });
+}
+
+function editInternship(index) {
+    const item = internships[index];
+    document.getElementById('company').value=item.company;
+    document.getElementById('role').value=item.role;
+    document.getElementById('status').value=item.status;
+    document.getElementById('date').value=item.date;
+    editIndex=index;
+    document.querySelector(".primary-btn").innerText="Update Internship";
+    displayInternships();
+}
+
+function deleteInternship(index){
+    internships.splice(index,1); saveData();
+    if(editIndex===index){clearForm(); editIndex=-1; document.querySelector(".primary-btn").innerText="Add Internship";}
+    updateCharts();
+}
+
+function clearForm(){ document.getElementById('company').value=""; document.getElementById('role').value=""; document.getElementById('date').value=""; document.getElementById('status').value="Applied"; }
+
+function updateStats(){
+    const total=internships.length;
+    const applied=internships.filter(i=>i.status==="Applied").length;
+    const interview=internships.filter(i=>i.status==="Interview").length;
+    const selected=internships.filter(i=>i.status==="Selected").length;
+    const rejected=internships.filter(i=>i.status==="Rejected").length;
+
+    document.getElementById("totalBox").innerHTML=`Total<br><span style="font-size:20px">${total}</span>`;
+    document.getElementById("appliedBox").innerHTML=`Applied<br>${applied}`;
+    document.getElementById("interviewBox").innerHTML=`Interview<br>${interview}`;
+    document.getElementById("selectedBox").innerHTML=`Selected<br>${selected}`;
+    document.getElementById("rejectedBox").innerHTML=`Rejected<br>${rejected}`;
+
+    renderChart(applied,interview,selected,rejected);
+}
+
+let statusChart;
+function renderChart(applied, interview, selected, rejected){
+    const ctx=document.getElementById('statusChart').getContext('2d');
+    if(statusChart) statusChart.destroy();
+    statusChart=new Chart(ctx,{
+        type:'pie',
+        data:{ labels:['Applied','Interview','Selected','Rejected'], datasets:[{ data:[applied,interview,selected,rejected], backgroundColor:['#757575','#fb8c00','#43a047','#e53935'] }] },
+        options:{
+            responsive:true,
+            plugins:{legend:{position:'bottom'}, tooltip:{enabled:true}},
+            onClick:(evt,item)=>{ if(item.length>0){ const index=item[0].index; const status=['Applied','Interview','Selected','Rejected'][index]; document.getElementById('filter').value=status; displayInternships(); } }
+        }
+    });
+}
+
+let upcomingChart;
+function renderUpcomingInterviews(){
+    const today=new Date();
+    const next7Days=[]; const labels=[];
+    for(let i=0;i<7;i++){
+        const date=new Date(today); date.setDate(today.getDate()+i);
+        const dateStr=date.toISOString().split('T')[0]; next7Days.push(dateStr);
+        labels.push(date.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+    }
+    const counts=next7Days.map(day=>internships.filter(i=>i.status==="Interview" && i.date===day).length);
+    const ctx=document.getElementById('upcomingChart').getContext('2d');
+    if(upcomingChart) upcomingChart.destroy();
+    upcomingChart=new Chart(ctx,{
+        type:'bar',
+        data:{labels:labels,datasets:[{label:'Interviews',data:counts,backgroundColor:'#fb8c00'}]},
+        options:{responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, precision:0}}}
+    });
+}
+
+// CSV exports
+function exportCSV(){ if(internships.length===0){ alert("No data to export"); return; }
+    let csv="Company,Role,Status,Date\n"; internships.forEach(i=>{ csv+=`${i.company},${i.role},${i.status},${i.date}\n`; });
+    const blob=new Blob([csv],{type:"text/csv"}); const link=document.createElement("a"); link.href=URL.createObjectURL(blob); link.download="internships.csv"; link.click();
+}
+function exportUpcomingCSV(){ const today=new Date(); const next7Days=[]; for(let i=0;i<7;i++){ const date=new Date(today); date.setDate(today.getDate()+i); next7Days.push(date.toISOString().split('T')[0]); }
+    const upcoming=internships.filter(i=>i.status==="Interview"&&next7Days.includes(i.date)); if(upcoming.length===0){ alert("No upcoming interviews to export!"); return; }
+    let csv="Company,Role,Status,Date\n"; upcoming.forEach(i=>{ csv+=`${i.company},${i.role},${i.status},${i.date}\n`; });
+    const blob=new Blob([csv],{type:"text/csv"}); const link=document.createElement("a"); link.href=URL.createObjectURL(blob); link.download="upcoming_interviews.csv"; link.click();
+}
+function exportFilteredCSV(){ const tbodyRows=document.querySelectorAll("#applicationsTable tbody tr"); if(tbodyRows.length===0){ alert("No data to export!"); return; }
+    let csv="Company,Role,Status,Date\n"; tbodyRows.forEach(row=>{ const cells=row.querySelectorAll("td"); csv+=Array.from(cells).slice(0,4).map(td=>td.innerText).join(",")+"\n"; });
+    const blob=new Blob([csv],{type:"text/csv"}); const link=document.createElement("a"); link.href=URL.createObjectURL(blob); link.download="filtered_internships.csv"; link.click();
+}
+
+// Dark mode toggle
+function toggleDarkMode(){
+    document.body.classList.toggle("dark-mode");
+    localStorage.setItem("darkMode", document.body.classList.contains("dark-mode"));
+}
+
+function updateCharts(){ displayInternships(); updateStats(); renderUpcomingInterviews(); }
+
+// Initialize
+window.onload=function(){
+    if(localStorage.getItem("darkMode")==="true") document.body.classList.add("dark-mode");
+    updateCharts();
+};
+</script>
+
+</body>
+</html>
