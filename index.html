@@ -3,79 +3,257 @@
 <head>
     <title>Internship Tracker Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; padding: 40px; color: #000; }
-        h1 { text-align: center; margin-bottom: 30px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; padding: 40px; }
+        h1 { text-align: center; }
 
-        /* Dark mode */
-        body.dark-mode { background: #121212; color: #e0e0e0; }
-        body.dark-mode input, body.dark-mode select, body.dark-mode table, body.dark-mode .card { background: #1e1e1e; color: #e0e0e0; border: 1px solid #333; }
-        body.dark-mode th { background: linear-gradient(90deg,#333,#555); color: #e0e0e0; }
-        body.dark-mode .Applied-row { background: #2c2c2c; }
-        body.dark-mode .Interview-row { background: #3a2b1f; }
-        body.dark-mode .Selected-row { background: #243624; }
-        body.dark-mode .Rejected-row { background: #3a1f1f; }
-        body.dark-mode .stat-box { background: #1e1e1e; box-shadow: 0 2px 6px rgba(255,255,255,0.05); }
+        body.dark { background: #121212; color: white; }
 
-        /* Card styling */
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 25px; transition: transform 0.2s, box-shadow 0.2s; }
-        .card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
-        .card h3 { background: linear-gradient(90deg,#1e88e5,#42a5f5); color: white; padding: 10px 15px; border-radius: 8px; }
+        .card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        body.dark .card { background: #1e1e1e; }
 
-        input, select { width: 100%; padding: 10px; margin: 8px 0 15px; border-radius: 6px; border: 1px solid #ccc; }
-        button { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: transform 0.1s; }
-        button:hover { transform: scale(1.05); }
-        .primary-btn { background: #1e88e5; color: white; width: 100%; margin-bottom:10px; }
-        .edit-btn { background: #1976d2; color: white; margin-right: 6px; }
+        input, select { width: 100%; padding: 8px; margin: 8px 0; }
+
+        button { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; }
+        .primary { background: #1e88e5; color: white; }
+        .edit-btn { background: #fb8c00; color: white; }
         .delete-btn { background: #e53935; color: white; }
 
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; transition: all 0.2s; }
-        table tr:hover { opacity: 0.9; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background: linear-gradient(90deg,#42a5f5,#1e88e5); color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 10px; border-bottom: 1px solid #ddd; }
+        th { background: #1e88e5; color: white; }
 
-        .Applied-row { background: #f5f5f5; }
-        .Interview-row { background: #fff3e0; }
-        .Selected-row { background: #e8f5e9; }
-        .Rejected-row { background: #ffebee; }
+        .stats { display: flex; gap: 10px; flex-wrap: wrap; }
+        .stat { flex: 1; padding: 15px; background: #e3f2fd; border-radius: 8px; text-align: center; }
 
-        .badge { padding: 4px 10px; border-radius: 12px; color: white; font-size: 12px; font-weight: 600; }
-        .badge.Applied::before { content:"📄 "; }
-        .badge.Interview::before { content:"🕒 "; }
-        .badge.Selected::before { content:"✅ "; }
-        .badge.Rejected::before { content:"❌ "; }
-        .Applied { background: #757575; }
-        .Interview { background: #fb8c00; }
-        .Selected { background: #43a047; }
-        .Rejected { background: #e53935; }
-
-        .stats-container { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 10px; }
-        .stat-box { flex: 1; min-width: 120px; background: #f4f6f9; padding: 20px; border-radius: 12px; text-align: center; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: transform 0.2s, box-shadow 0.2s; }
-        .stat-box:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        #totalBox { background: #90caf9; color: #0d47a1; }
-        #appliedBox { background: #eeeeee; color: #424242; }
-        #interviewBox { background: #ffe082; color: #ef6c00; }
-        #selectedBox { background: #a5d6a7; color: #1b5e20; }
-        #rejectedBox { background: #ef9a9a; color: #b71c1c; }
-
-        #chartContainer, #upcomingChartContainer { max-width: 400px; margin: 20px auto; }
-        #searchInput { max-width: 400px; margin-top: 10px; }
-        .editing-row { background: #fff3e0 !important; font-weight: 600; }
+        #chartContainer { max-width: 400px; margin: 20px auto; }
     </style>
 </head>
+
 <body>
 
-<div style="text-align:center; margin-bottom:20px;">
-    <button id="darkModeBtn" class="primary-btn" onclick="toggleDarkMode()">Toggle Dark Mode 🌙</button>
+<div style="text-align:center;">
+    <button onclick="toggleDark()" class="primary">Toggle Dark Mode 🌙</button>
 </div>
 
 <h1>Internship Tracker Dashboard</h1>
 
-<!-- Rest of your HTML and JS remains EXACTLY SAME -->
+<div class="card">
+    <h3>Add / Edit Internship</h3>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <input type="text" id="company" placeholder="Company Name">
+    <input type="text" id="role" placeholder="Role">
+    <input type="date" id="date">
+    
+    <select id="status">
+        <option>Applied</option>
+        <option>Interview</option>
+        <option>Selected</option>
+        <option>Rejected</option>
+    </select>
 
-<!-- Your full original JavaScript code continues here unchanged -->
+    <button onclick="addInternship()" class="primary" id="submitBtn">Add Internship</button>
+</div>
+
+<div class="card">
+    <h3>Filter & Search</h3>
+
+    <select id="filterStatus" onchange="renderTable()">
+        <option value="All">All</option>
+        <option>Applied</option>
+        <option>Interview</option>
+        <option>Selected</option>
+        <option>Rejected</option>
+    </select>
+
+    <input type="text" id="searchInput" placeholder="Search by company or role" onkeyup="renderTable()">
+</div>
+
+<div class="card">
+    <h3>Application Summary</h3>
+    <div class="stats">
+        <div class="stat">Total: <span id="total">0</span></div>
+        <div class="stat">Applied: <span id="applied">0</span></div>
+        <div class="stat">Interview: <span id="interview">0</span></div>
+        <div class="stat">Selected: <span id="selected">0</span></div>
+        <div class="stat">Rejected: <span id="rejected">0</span></div>
+    </div>
+</div>
+
+<div id="chartContainer">
+    <canvas id="statusChart"></canvas>
+</div>
+
+<div class="card">
+    <button onclick="downloadCSV()" class="primary">⬇ Download Applications</button>
+
+    <h3>My Applications</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Company</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+</div>
+
+<script>
+
+let internships = JSON.parse(localStorage.getItem("internships")) || [];
+let editIndex = -1;
+let chart;
+
+function saveData() {
+    localStorage.setItem("internships", JSON.stringify(internships));
+}
+
+function addInternship() {
+
+    const company = document.getElementById("company").value;
+    const role = document.getElementById("role").value;
+    const date = document.getElementById("date").value;
+    const status = document.getElementById("status").value;
+
+    if (!company || !role || !date) {
+        alert("Please fill all fields");
+        return;
+    }
+
+    const newData = { company, role, date, status };
+
+    if (editIndex === -1) {
+        internships.push(newData);
+    } else {
+        internships[editIndex] = newData;
+        editIndex = -1;
+        document.getElementById("submitBtn").textContent = "Add Internship";
+    }
+
+    document.getElementById("company").value = "";
+    document.getElementById("role").value = "";
+    document.getElementById("date").value = "";
+
+    saveData();
+    renderTable();
+}
+
+function deleteInternship(index) {
+    internships.splice(index, 1);
+    saveData();
+    renderTable();
+}
+
+function editInternship(index) {
+    const item = internships[index];
+
+    document.getElementById("company").value = item.company;
+    document.getElementById("role").value = item.role;
+    document.getElementById("date").value = item.date;
+    document.getElementById("status").value = item.status;
+
+    editIndex = index;
+    document.getElementById("submitBtn").textContent = "Update Internship";
+}
+
+function renderTable() {
+
+    const filter = document.getElementById("filterStatus").value;
+    const search = document.getElementById("searchInput").value.toLowerCase();
+
+    const table = document.getElementById("tableBody");
+    table.innerHTML = "";
+
+    let stats = { Applied:0, Interview:0, Selected:0, Rejected:0 };
+
+    internships.forEach((item, index) => {
+
+        if ((filter !== "All" && item.status !== filter) ||
+            (!item.company.toLowerCase().includes(search) &&
+             !item.role.toLowerCase().includes(search))) {
+            return;
+        }
+
+        stats[item.status]++;
+
+        table.innerHTML += `
+            <tr>
+                <td>${item.company}</td>
+                <td>${item.role}</td>
+                <td>${item.status}</td>
+                <td>${item.date}</td>
+                <td>
+                    <button class="edit-btn" onclick="editInternship(${index})">Edit</button>
+                    <button class="delete-btn" onclick="deleteInternship(${index})">Delete</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    updateStats(stats);
+}
+
+function updateStats(stats) {
+    document.getElementById("total").textContent = internships.length;
+    document.getElementById("applied").textContent = stats.Applied;
+    document.getElementById("interview").textContent = stats.Interview;
+    document.getElementById("selected").textContent = stats.Selected;
+    document.getElementById("rejected").textContent = stats.Rejected;
+
+    updateChart(stats);
+}
+
+function updateChart(stats) {
+
+    const ctx = document.getElementById("statusChart");
+
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Applied','Interview','Selected','Rejected'],
+            datasets: [{
+                data: [
+                    stats.Applied,
+                    stats.Interview,
+                    stats.Selected,
+                    stats.Rejected
+                ]
+            }]
+        }
+    });
+}
+
+function downloadCSV() {
+    let csv = "Company,Role,Status,Date\n";
+    internships.forEach(item => {
+        csv += `${item.company},${item.role},${item.status},${item.date}\n`;
+    });
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "internships.csv";
+    a.click();
+}
+
+function toggleDark() {
+    document.body.classList.toggle("dark");
+}
+
+renderTable();
+
+</script>
 
 </body>
 </html>
