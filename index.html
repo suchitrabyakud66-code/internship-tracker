@@ -6,11 +6,16 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: Arial, sans-serif;
             background: #f4f6f9;
-            padding: 40px;
-            transition: 0.3s ease;
+            margin: 0;
+            padding: 15px;
+            transition: 0.3s;
         }
 
         body.dark {
@@ -18,38 +23,45 @@
             color: white;
         }
 
-        h1 { text-align: center; }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 24px;
+        }
 
         .card {
             background: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            transition: 0.3s ease;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            overflow-x: auto;
         }
 
-        body.dark .card { background: #1e1e1e; }
+        body.dark .card {
+            background: #1e1e1e;
+        }
 
         input, select {
             width: 100%;
-            padding: 8px;
-            margin: 8px 0;
-            border-radius: 6px;
+            padding: 6px;
+            margin: 6px 0;
+            border-radius: 5px;
             border: 1px solid #ccc;
+            font-size: 14px;
         }
 
         button {
-            padding: 8px 14px;
+            padding: 6px 12px;
             border: none;
-            border-radius: 6px;
+            border-radius: 5px;
             cursor: pointer;
-            transition: 0.2s ease;
-        }
-
-        button:hover {
-            transform: scale(1.05);
-            opacity: 0.9;
+            font-size: 14px;
+            margin-top: 5px;
         }
 
         .primary { background: #1e88e5; color: white; }
@@ -57,138 +69,157 @@
         .delete-btn { background: #e53935; color: white; }
         .clear-btn { background: #6d4c41; color: white; }
 
+        button:hover {
+            opacity: 0.9;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            table-layout: fixed;
         }
 
         th, td {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
+            border: 1px solid #ddd;
+            padding: 8px;
             text-align: center;
+            word-wrap: break-word;
+            font-size: 14px;
         }
 
-        th { background: #1e88e5; color: white; }
-
-        tr:hover { background: #f1f1f1; }
-        body.dark tr:hover { background: #333; }
+        th {
+            background: #1e88e5;
+            color: white;
+        }
 
         .stats {
             display: flex;
-            gap: 10px;
             flex-wrap: wrap;
+            gap: 10px;
         }
 
         .stat {
             flex: 1;
-            padding: 15px;
+            padding: 10px;
             background: #e3f2fd;
-            border-radius: 10px;
+            border-radius: 6px;
             text-align: center;
             font-weight: bold;
+            font-size: 14px;
         }
 
-        body.dark .stat { background: #2c2c2c; }
+        body.dark .stat {
+            background: #2c2c2c;
+        }
 
         #chartContainer {
-            max-width: 400px;
-            margin: 20px auto;
+            max-width: 300px;
+            margin: auto;
         }
 
         footer {
-            text-align:center;
-            padding:20px;
-            margin-top:40px;
-            opacity:0.7;
+            text-align: center;
+            margin-top: 20px;
+            opacity: 0.7;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 20px;
+            }
+
+            th, td {
+                font-size: 12px;
+            }
         }
     </style>
 </head>
 
 <body>
 
-<div style="text-align:center;">
-    <button onclick="toggleDark()" class="primary">Toggle Dark Mode 🌙</button>
-</div>
+<div class="container">
 
-<h1>Internship Tracker Pro</h1>
-
-<div class="card">
-    <h3>Add / Edit Internship</h3>
-    <input type="text" id="company" placeholder="Company Name">
-    <input type="text" id="role" placeholder="Role">
-    <input type="date" id="date">
-    <select id="status">
-        <option>Applied</option>
-        <option>Interview</option>
-        <option>Selected</option>
-        <option>Rejected</option>
-    </select>
-    <button onclick="addInternship()" class="primary" id="submitBtn">Add Internship</button>
-</div>
-
-<div class="card">
-    <h3>Filter, Search & Sort</h3>
-
-    <select id="filterStatus" onchange="renderTable()">
-        <option value="All">All</option>
-        <option>Applied</option>
-        <option>Interview</option>
-        <option>Selected</option>
-        <option>Rejected</option>
-    </select>
-
-    <select id="sortDate" onchange="renderTable()">
-        <option value="new">Sort: Newest First</option>
-        <option value="old">Sort: Oldest First</option>
-    </select>
-
-    <input type="text" id="searchInput"
-           placeholder="Search by company or role"
-           onkeyup="renderTable()">
-</div>
-
-<div class="card">
-    <h3>Application Summary</h3>
-    <div class="stats">
-        <div class="stat">Total: <span id="total">0</span></div>
-        <div class="stat">Applied: <span id="applied">0</span></div>
-        <div class="stat">Interview: <span id="interview">0</span></div>
-        <div class="stat">Selected: <span id="selected">0</span></div>
-        <div class="stat">Rejected: <span id="rejected">0</span></div>
+    <div style="text-align:center;">
+        <button onclick="toggleDark()" class="primary">Toggle Dark Mode 🌙</button>
     </div>
+
+    <h1>Internship Tracker Pro</h1>
+
+    <div class="card">
+        <h3>Add / Edit Internship</h3>
+        <input type="text" id="company" placeholder="Company Name">
+        <input type="text" id="role" placeholder="Role">
+        <input type="date" id="date">
+        <select id="status">
+            <option>Applied</option>
+            <option>Interview</option>
+            <option>Selected</option>
+            <option>Rejected</option>
+        </select>
+        <button onclick="addInternship()" class="primary" id="submitBtn">Add Internship</button>
+    </div>
+
+    <div class="card">
+        <h3>Filter, Search & Sort</h3>
+        <select id="filterStatus" onchange="renderTable()">
+            <option value="All">All</option>
+            <option>Applied</option>
+            <option>Interview</option>
+            <option>Selected</option>
+            <option>Rejected</option>
+        </select>
+
+        <select id="sortDate" onchange="renderTable()">
+            <option value="new">Sort: Newest First</option>
+            <option value="old">Sort: Oldest First</option>
+        </select>
+
+        <input type="text" id="searchInput" placeholder="Search by company or role" onkeyup="renderTable()">
+    </div>
+
+    <div class="card">
+        <h3>Application Summary</h3>
+        <div class="stats">
+            <div class="stat">Total: <span id="total">0</span></div>
+            <div class="stat">Applied: <span id="applied">0</span></div>
+            <div class="stat">Interview: <span id="interview">0</span></div>
+            <div class="stat">Selected: <span id="selected">0</span></div>
+            <div class="stat">Rejected: <span id="rejected">0</span></div>
+        </div>
+    </div>
+
+    <div id="chartContainer">
+        <canvas id="statusChart"></canvas>
+    </div>
+
+    <div class="card">
+        <button onclick="downloadCSV()" class="primary">⬇ Download Applications</button>
+        <button onclick="clearAll()" class="clear-btn">🗑 Clear All</button>
+
+        <h3>My Applications</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <footer>
+        © 2026 Suchitra | Internship Tracker Pro
+    </footer>
+
 </div>
-
-<div id="chartContainer">
-    <canvas id="statusChart"></canvas>
-</div>
-
-<div class="card">
-    <button onclick="downloadCSV()" class="primary">⬇ Download Applications</button>
-    <button onclick="clearAll()" class="clear-btn">🗑 Clear All</button>
-
-    <h3>My Applications</h3>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Company</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-    </table>
-</div>
-
-<footer>
-    © 2026 Suchitra | Internship Tracker Pro
-</footer>
 
 <script>
-
 let internships = JSON.parse(localStorage.getItem("internships")) || [];
 let editIndex = -1;
 let chart;
@@ -208,7 +239,6 @@ function saveData() {
 }
 
 function addInternship() {
-
     const company = companyInput.value.trim();
     const role = roleInput.value.trim();
     const date = dateInput.value;
@@ -264,7 +294,6 @@ function editInternship(index) {
 }
 
 function renderTable() {
-
     const filter = filterStatus.value;
     const search = searchInput.value.toLowerCase();
     const sortType = sortDate.value;
@@ -286,15 +315,7 @@ function renderTable() {
     let stats = { Applied:0, Interview:0, Selected:0, Rejected:0 };
     internships.forEach(item => stats[item.status]++);
 
-    filtered.forEach((item) => {
-
-        const realIndex = internships.findIndex(i =>
-            i.company === item.company &&
-            i.role === item.role &&
-            i.date === item.date &&
-            i.status === item.status
-        );
-
+    filtered.forEach((item, index) => {
         tableBody.innerHTML += `
             <tr>
                 <td>${item.company}</td>
@@ -302,8 +323,8 @@ function renderTable() {
                 <td>${item.status}</td>
                 <td>${item.date}</td>
                 <td>
-                    <button class="edit-btn" onclick="editInternship(${realIndex})">Edit</button>
-                    <button class="delete-btn" onclick="deleteInternship(${realIndex})">Delete</button>
+                    <button class="edit-btn" onclick="editInternship(${index})">Edit</button>
+                    <button class="delete-btn" onclick="deleteInternship(${index})">Delete</button>
                 </td>
             </tr>
         `;
@@ -313,18 +334,15 @@ function renderTable() {
 }
 
 function updateStats(stats) {
-
     total.textContent = internships.length;
     applied.textContent = stats.Applied;
     interview.textContent = stats.Interview;
     selected.textContent = stats.Selected;
     rejected.textContent = stats.Rejected;
-
     updateChart(stats);
 }
 
 function updateChart(stats) {
-
     if (!chart) {
         chart = new Chart(statusChart, {
             type: 'doughnut',
@@ -332,12 +350,7 @@ function updateChart(stats) {
                 labels: ['Applied','Interview','Selected','Rejected'],
                 datasets: [{
                     data: [0,0,0,0],
-                    backgroundColor: [
-                        '#42a5f5',
-                        '#ffa726',
-                        '#66bb6a',
-                        '#ef5350'
-                    ]
+                    backgroundColor: ['#42a5f5','#ffa726','#66bb6a','#ef5350']
                 }]
             }
         });
@@ -374,7 +387,6 @@ function toggleDark() {
 }
 
 renderTable();
-
 </script>
 
 </body>
